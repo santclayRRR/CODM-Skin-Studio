@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CODM Skin Studio</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#10151d;color:#edf2fa;font:16px system-ui}
+header{padding:22px;background:#1b2635;border-bottom:2px solid #65d6ad}
+main{max-width:760px;margin:auto;padding:18px}
+h1{margin:0;font-size:25px}
+small,.muted{color:#aab7c8}
+nav{display:flex;gap:8px;margin:20px 0}
+button{border:1px solid #43556a;background:#243346;color:white;
+padding:11px 14px;border-radius:9px;cursor:pointer}
+button.active{background:#176b55;border-color:#65d6ad}
+.panel{background:#1b2635;padding:16px;border-radius:14px;margin:14px 0}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.skin{min-height:105px;text-align:left}
+.skin strong{display:block;margin-bottom:8px}
+#preview{padding:22px;text-align:center;background:#26374b;
+border-radius:12px;margin-top:12px}
+#preview .symbol{font-size:48px}
+label{display:block;margin:12px 0}
+.status{color:#f2d28b}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>CODM Skin Studio</h1>
+  <small>Prototype lokal · V1 · Tidak terhubung ke game</small>
+</header>
+<main>
+<nav>
+  <button class="active" data-tab="skins">Skin</button>
+  <button data-tab="menu">Menu</button>
+  <button data-tab="compat">Kompatibilitas</button>
+</nav>
+
+<section id="skins">
+  <div class="panel">
+    <h2>Pilih skin untuk preview</h2>
+    <p class="muted">Pilihan ini hanya mengubah tampilan prototype.</p>
+    <div class="cards" id="skinlist"></div>
+    <div id="preview">
+      <div class="symbol">🎯</div>
+      <h3 id="skinname">Default</h3>
+      <p id="skininfo">Preview lokal</p>
+    </div>
+  </div>
+</section>
+
+<section id="menu" class="hidden">
+  <div class="panel">
+    <h2>Menu Studio</h2>
+    <label><input type="checkbox" id="previewToggle" checked>
+      Aktifkan preview lokal</label>
+    <label><input type="checkbox" id="logToggle" checked>
+      Tampilkan log aktivitas</label>
+    <p class="muted">Pengaturan ini hanya berlaku pada halaman ini.</p>
+    <button id="reset">Reset pengaturan</button>
+    <pre id="log">Studio dimulai.</pre>
+  </div>
+</section>
+
+<section id="compat" class="hidden">
+  <div class="panel">
+    <h2>Evaluasi kompatibilitas</h2>
+    <p class="status">Belum diuji pada CODM</p>
+    <label>Versi game
+      <input id="gameVersion" placeholder="Catat versi CODM"
+      style="width:100%;padding:10px;margin-top:5px">
+    </label>
+    <label>Target pemeriksaan
+      <select id="target" style="padding:10px;width:100%">
+        <option value="lobby">Lobby</option>
+        <option value="match">Pertandingan</option>
+        <option value="both">Lobby dan pertandingan</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="assetKnown">
+      Format dan sumber aset sudah diverifikasi</label>
+    <label><input type="checkbox" id="backup">
+      Backup data terkait sudah tersedia</label>
+    <button id="evaluate">Evaluasi kesiapan</button>
+    <p id="result" aria-live="polite">Status: belum dievaluasi.</p>
+    <p class="muted">Checklist ini bukan tes kompatibilitas otomatis.
+    Tidak mengonfirmasi bahwa skin dapat diterapkan ke game.</p>
+  </div>
+</section>
+</main>
+<script>
+const skins=[
+ {name:"Default",symbol:"🎯",info:"Preview standar"},
+ {name:"Crimson",symbol:"🔴",info:"Tema merah"},
+ {name:"Arctic",symbol:"❄️",info:"Tema es"},
+ {name:"Neon",symbol:"⚡",info:"Tema neon"}
+];
+const list=document.querySelector("#skinlist");
+const log=document.querySelector("#log");
+function say(s){
+ if(document.querySelector("#logToggle").checked) log.textContent=s;
+}
+skins.forEach((s,i)=>{
+ const b=document.createElement("button");
+ b.className="skin";b.innerHTML="<strong>"+s.name+"</strong>"+s.info;
+ b.onclick=()=>{
+  document.querySelector("#skinname").textContent=s.name;
+  document.querySelector("#skininfo").textContent=s.info;
+  document.querySelector("#preview .symbol").textContent=s.symbol;
+  document.querySelectorAll(".skin").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");say("Preview dipilih: "+s.name);
+ };
+ list.appendChild(b);
+ if(i===0)b.click();
+});
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+ b.classList.add("active");
+ ["skins","menu","compat"].forEach(id=>
+  document.getElementById(id).classList.toggle("hidden",id!==b.dataset.tab));
+});
+document.querySelector("#previewToggle").onchange=e=>{
+ document.querySelector("#preview").style.display=e.target.checked?"block":"none";
+ say("Preview lokal "+(e.target.checked?"aktif":"nonaktif"));
+};
+document.querySelector("#reset").onclick=()=>{
+ document.querySelector("#previewToggle").checked=true;
+ document.querySelector("#logToggle").checked=true;
+ document.querySelector("#preview").style.display="block";
+ say("Pengaturan direset.");
+};
+document.querySelector("#evaluate").onclick=()=>{
+ const version=document.querySelector("#gameVersion").value.trim();
+ const known=document.querySelector("#assetKnown").checked;
+ const backup=document.querySelector("#backup").checked;
+ const result=document.querySelector("#result");
+ if(!version||!known||!backup){
+  result.textContent="Belum siap: catat versi game, verifikasi sumber/format aset, dan siapkan backup.";
+ }else{
+  result.textContent="Checklist awal lengkap untuk "+document.querySelector("#target").selectedOptions[0].text+". Kompatibilitas aktual tetap belum terbukti.";
+ }
+};
+</script>
+</body>
+</html>
